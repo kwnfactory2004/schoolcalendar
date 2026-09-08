@@ -168,8 +168,7 @@
             { num: 4, name: "4コマ目", time: "12:50〜13:40" },
             { num: 5, name: "5コマ目", time: "13:50〜14:40" },
             { num: 6, name: "6コマ目", time: "14:50〜15:40" },
-            { num: 7, name: "7コマ目", time: "15:50〜16:40" },
-            { num: 8, name: "8コマ目", time: "16:50〜17:40" },
+            { num: 7, name: "7コマ目", time: "15:50〜16:40" }
         ];
 
         // --- 2. 予定データ (events) ---
@@ -237,8 +236,8 @@
                 [1, 2, 3, 4].map(p => ({ date: d, period: p, title: "1級対策", category: "normal" }))
             ),
             // 10/17 - 10/18
-            ...[1, 2, 3, 4, 5, 6, 7, 8].map(p => ({ date: "2026-10-17", period: p, title: "学園祭準備", category: "event" })),
-            ...[1, 2, 3, 4, 5, 6, 7, 8].map(p => ({ date: "2026-10-18", period: p, title: "学園祭", category: "event" })),
+            ...[1, 2, 3, 4, 5, 6, 7].map(p => ({ date: "2026-10-17", period: p, title: "学園祭準備", category: "event" })),
+            ...[1, 2, 3, 4, 5, 6, 7].map(p => ({ date: "2026-10-18", period: p, title: "学園祭", category: "event" })),
             // 10/21
             ...[1, 2, 3, 4].map(p => ({ date: "2026-10-21", period: p, title: "1級対策", category: "normal" })),
             // 10/22
