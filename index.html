@@ -423,4 +423,250 @@
             // 全休・学校休み・祝日の告知ヘッダーカード
             if (!dayInfo.hasClass) {
                 let offBadgeColor = "bg-purple-100 text-purple-800 border-purple-200";
-                let off
+                let offTitle = "学校休み";
+                let offDesc = "本日は土日祝日以外の全日休校日です。";
+
+                if (dayInfo.holidayName) {
+                    offBadgeColor = "bg-red-100 text-red-800 border-red-200";
+                    offTitle = `祝日 (${dayInfo.holidayName})`;
+                    offDesc = "本日は祝日のため学校休みです。";
+                } else if (dayInfo.isWeekend) {
+                    offBadgeColor = "bg-slate-100 text-slate-700 border-slate-200";
+                    offTitle = "週末休日";
+                    offDesc = "本日は土日休日のため授業はありません。";
+                }
+
+                container.innerHTML += `
+                    <div class="p-4 mb-3 rounded-xl border ${offBadgeColor} flex items-center justify-between shadow-sm">
+                        <div>
+                            <div class="text-base font-bold">${offTitle}</div>
+                            <div class="text-xs opacity-80 mt-0.5">${offDesc}</div>
+                        </div>
+                        <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-white/80 border">
+                            ${offTitle}
+                        </span>
+                    </div>
+                `;
+            }
+
+            const dayEvents = dayInfo.dayEvents;
+
+            periods.forEach(p => {
+                if (p.num === 'lunch') {
+                    container.innerHTML += `
+                        <div class="bg-slate-100/80 rounded-lg p-2.5 text-center text-xs font-semibold text-slate-500 border border-slate-200">
+                            昼休憩 (12:00〜12:50)
+                        </div>
+                    `;
+                    return;
+                }
+
+                const ev = dayEvents.find(e => e.period === p.num);
+                let style = categoryStyles.empty;
+                let emptyText = '授業なし';
+
+                if (ev) {
+                    style = categoryStyles[ev.category] || categoryStyles.normal;
+                } else if (dayInfo.statusType === 'school_off') {
+                    style = categoryStyles.school_off;
+                    emptyText = '学校休み';
+                } else if (dayInfo.statusType === 'holiday') {
+                    style = categoryStyles.holiday;
+                    emptyText = `祝日 (${dayInfo.holidayName})`;
+                }
+
+                container.innerHTML += `
+                    <div class="bg-white rounded-xl p-3 shadow-sm border ${ev ? style.bg : 'border-slate-200'} flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="text-center w-16 flex-shrink-0">
+                                <div class="text-xs font-bold text-slate-700">${p.name}</div>
+                                <div class="text-[10px] text-slate-500">${p.time.replace('〜', ' - ')}</div>
+                            </div>
+                            <div class="h-8 w-px bg-slate-200"></div>
+                            <div>
+                                <div class="text-sm font-bold ${ev ? 'text-slate-800' : 'text-slate-400'}">
+                                    ${ev ? ev.title : emptyText}
+                                </div>
+                            </div>
+                        </div>
+                        ${ev ? `
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${style.badge}">
+                                ${style.label}
+                            </span>
+                        ` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        // --- 9. 週別ビュー描画 ---
+        function renderWeekly() {
+            const monday = getMonday(currentDate);
+            const sunday = new Date(monday);
+            sunday.setDate(sunday.getDate() + 6);
+
+            // Title Display
+            document.getElementById('date-display-title').textContent = 
+                `${monday.getMonth() + 1}/${monday.getDate()} - ${sunday.getMonth() + 1}/${sunday.getDate()} (今週)`;
+
+            const headerRow = document.getElementById('weekly-header');
+            const body = document.getElementById('weekly-body');
+
+            // 7日分のDateオブジェクト配列
+            const weekDates = Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(monday);
+                d.setDate(d.getDate() + i);
+                return d;
+            });
+
+            // ヘッダー描画
+            headerRow.innerHTML = `<th class="p-2 border-r border-slate-200 w-20">時限</th>`;
+            weekDates.forEach(d => {
+                const dayStr = getDayOfWeekStr(d);
+                const isToday = formatDateStr(d) === formatDateStr(new Date());
+                const dayInfo = getDayInfo(d);
+                
+                let headerBg = isToday ? 'bg-deepgreen-600 text-white' : '';
+                let extraTag = '';
+
+                if (dayInfo.holidayName) {
+                    extraTag = `<div class="text-[9px] text-red-500 font-bold">${dayInfo.holidayName}</div>`;
+                } else if (dayInfo.statusType === 'school_off') {
+                    extraTag = `<div class="text-[9px] text-purple-600 font-bold">学校休み</div>`;
+                }
+
+                headerRow.innerHTML += `
+                    <th class="p-2 border-r border-slate-200 ${headerBg}">
+                        ${dayStr} <span class="font-normal text-[10px]">(${d.getMonth() + 1}/${d.getDate()})</span>
+                        ${extraTag}
+                    </th>
+                `;
+            });
+
+            // ボディ描画
+            body.innerHTML = '';
+            periods.forEach(p => {
+                if (p.num === 'lunch') {
+                    body.innerHTML += `
+                        <tr class="bg-slate-100/80 font-bold text-slate-500">
+                            <td class="p-1.5 border-r border-slate-200">昼休</td>
+                            <td colspan="7" class="p-1.5 text-center text-[11px]">昼休憩 (12:00〜12:50)</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                let rowHtml = `<tr class="hover:bg-slate-50/50"><td class="p-2 border-r border-slate-200 font-bold text-slate-600">${p.num}コマ</td>`;
+                
+                weekDates.forEach(d => {
+                    const dayInfo = getDayInfo(d);
+                    const ev = dayInfo.dayEvents.find(e => e.period === p.num);
+                    const style = ev ? categoryStyles[ev.category] : null;
+
+                    let cellContent = '<span class="text-slate-300">-</span>';
+                    let cellBg = '';
+
+                    if (ev) {
+                        cellBg = style.bg;
+                        cellContent = `<div class="font-bold text-[11px] leading-tight">${ev.title}</div>`;
+                    } else if (dayInfo.statusType === 'school_off') {
+                        cellBg = 'bg-purple-50/40';
+                        cellContent = '<span class="text-purple-400 text-[10px]">学校休み</span>';
+                    } else if (dayInfo.statusType === 'holiday') {
+                        cellBg = 'bg-red-50/40';
+                        cellContent = `<span class="text-red-400 text-[10px]">${dayInfo.holidayName}</span>`;
+                    }
+
+                    rowHtml += `
+                        <td class="p-1.5 border-r border-slate-200 align-top ${cellBg}">
+                            ${cellContent}
+                        </td>
+                    `;
+                });
+
+                rowHtml += `</tr>`;
+                body.innerHTML += rowHtml;
+            });
+        }
+
+        // --- 10. 月別ビュー描画 ---
+        function renderMonthly() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            // Title Display
+            document.getElementById('date-display-title').textContent = `${year}年 ${month + 1}月`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDayOfWeek = firstDay.getDay(); // 0:日, 1:月...
+            const totalDays = lastDay.getDate();
+
+            const grid = document.getElementById('monthly-grid');
+            grid.innerHTML = '';
+
+            // 前月の埋め要素
+            for (let i = 0; i < startDayOfWeek; i++) {
+                grid.innerHTML += `<div class="bg-slate-50 border border-slate-100 rounded-lg h-20 p-1 opacity-40"></div>`;
+            }
+
+            // 当月の日付セル
+            const todayStr = formatDateStr(new Date());
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dateObj = new Date(year, month, day);
+                const dayInfo = getDayInfo(dateObj);
+                const isToday = dayInfo.dateStr === todayStr;
+
+                // その日のイベント一覧
+                const dayEvs = dayInfo.dayEvents;
+
+                // カテゴリ別の簡易代表タグ
+                const categories = [...new Set(dayEvs.map(e => e.category))];
+
+                let eventBadgeHtml = '';
+                if (dayEvs.length > 0) {
+                    if (categories.includes('exam')) {
+                        eventBadgeHtml += `<div class="bg-rose-500 text-white text-[9px] px-1 py-0.5 rounded truncate font-medium mt-1">試験</div>`;
+                    } else if (categories.includes('oral')) {
+                        eventBadgeHtml += `<div class="bg-amber-500 text-white text-[9px] px-1 py-0.5 rounded truncate font-medium mt-1">口述</div>`;
+                    } else if (categories.includes('event')) {
+                        eventBadgeHtml += `<div class="bg-sky-500 text-white text-[9px] px-1 py-0.5 rounded truncate font-medium mt-1">行事</div>`;
+                    } else {
+                        eventBadgeHtml += `<div class="bg-emerald-600 text-white text-[9px] px-1 py-0.5 rounded truncate font-medium mt-1">授業</div>`;
+                    }
+                } else if (dayInfo.statusType === 'holiday') {
+                    eventBadgeHtml += `<div class="bg-red-500 text-white text-[9px] px-1 py-0.5 rounded truncate font-medium mt-1">${dayInfo.holidayName}</div>`;
+                } else if (dayInfo.statusType === 'school_off') {
+                    eventBadgeHtml += `<div class="bg-purple-600 text-white text-[9px] px-1 py-0.5 rounded truncate font-medium mt-1">学校休み</div>`;
+                }
+
+                grid.innerHTML += `
+                    <div onclick="jumpToDate('${dayInfo.dateStr}')" 
+                         class="bg-white border ${isToday ? 'border-deepgreen-600 ring-2 ring-deepgreen-500/20' : 'border-slate-200'} rounded-lg h-20 p-1 flex flex-col justify-between cursor-pointer hover:border-deepgreen-500 transition shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs font-bold ${isToday ? 'bg-deepgreen-600 text-white px-1.5 py-0.5 rounded-full' : (dayInfo.holidayName || dateObj.getDay() === 0 ? 'text-red-500' : (dateObj.getDay() === 6 ? 'text-blue-500' : 'text-slate-700'))}">
+                                ${day}
+                            </span>
+                        </div>
+                        <div class="space-y-0.5">
+                            ${eventBadgeHtml}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 月別カレンダーの日付タップで日別表示へジャンプ
+        function jumpToDate(dateStr) {
+            currentDate = new Date(dateStr);
+            switchTab('daily');
+        }
+
+        // 初期化実行
+        window.addEventListener('DOMContentLoaded', () => {
+            render();
+        });
+    </script>
+</body>
+</html>
