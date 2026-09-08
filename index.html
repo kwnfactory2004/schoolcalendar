@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>時間割 - 4Aクラス</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        deepgreen: {
+                            50: '#f2f9f5',
+                            100: '#e1f2e6',
+                            200: '#c3e5ce',
+                            500: '#2d6a4f',
+                            600: '#1b4332',
+                            700: '#143326',
+                            800: '#0f261d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pb-12">
+
+    <!-- Header -->
+    <header class="bg-deepgreen-600 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 bg-white text-deepgreen-600 font-bold rounded-lg flex items-center justify-center text-lg shadow-sm">
+                    4A
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight">時間割</h1>
+                    <p class="text-xs text-deepgreen-100">4Aクラス スケジュール確認</p>
+                </div>
+            </div>
+            <div id="today-badge" class="text-xs bg-deepgreen-700/80 px-2.5 py-1 rounded-full text-deepgreen-100 border border-deepgreen-500">
+                <!-- 今日: YYYY/MM/DD -->
+            </div>
+        </div>
+        
+        <!-- Navigation Tabs -->
+        <div class="max-w-5xl mx-auto px-4 flex border-t border-deepgreen-500/50">
+            <button onclick="switchTab('daily')" id="tab-daily" class="flex-1 py-2.5 text-center text-sm font-semibold border-b-2 border-white text-white transition-colors">
+                日別（今日）
+            </button>
+            <button onclick="switchTab('weekly')" id="tab-weekly" class="flex-1 py-2.5 text-center text-sm font-semibold border-b-2 border-transparent text-deepgreen-200 hover:text-white transition-colors">
+                週別（今週）
+            </button>
+            <button onclick="switchTab('monthly')" id="tab-monthly" class="flex-1 py-2.5 text-center text-sm font-semibold border-b-2 border-transparent text-deepgreen-200 hover:text-white transition-colors">
+                月別（月間）
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-5xl mx-auto px-3 sm:px-4 pt-4 flex-1 w-full">
+
+        <!-- Controls (Date Nav) -->
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-200 mb-4 flex items-center justify-between">
+            <button id="prev-btn" onclick="navigateDate(-1)" class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 active:bg-slate-200 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            
+            <div class="text-center">
+                <div id="date-display-title" class="text-base sm:text-lg font-bold text-slate-800"></div>
+                <button onclick="resetToToday()" class="text-xs text-deepgreen-600 font-medium hover:underline mt-0.5">
+                    今日を表示
+                </button>
+            </div>
+
+            <button id="next-btn" onclick="navigateDate(1)" class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 active:bg-slate-200 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+
+        <!-- VIEW: Daily (日別) -->
+        <section id="view-daily" class="space-y-3">
+            <!-- Dynamic Daily Content -->
+        </section>
+
+        <!-- VIEW: Weekly (週別) -->
+        <section id="view-weekly" class="hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-center border-collapse min-w-[640px]">
+                        <thead>
+                            <tr id="weekly-header" class="bg-deepgreen-50 text-deepgreen-800 font-bold border-b border-slate-200">
+                                <!-- Dynamic Headers -->
+                            </tr>
+                        </thead>
+                        <tbody id="weekly-body" class="divide-y divide-slate-100">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: Monthly (月別) -->
+        <section id="view-monthly" class="hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-4">
+                <!-- Day Names Header -->
+                <div class="grid grid-cols-7 text-center font-bold text-xs text-slate-500 pb-2 border-b border-slate-200">
+                    <div class="text-red-500">日</div>
+                    <div>月</div>
+                    <div>火</div>
+                    <div>水</div>
+                    <div>木</div>
+                    <div>金</div>
+                    <div class="text-blue-500">土</div>
+                </div>
+                <!-- Calendar Grid -->
+                <div id="monthly-grid" class="grid grid-cols-7 gap-1 pt-2">
+                    <!-- Dynamic Calendar Cells -->
+                </div>
+            </div>
+            
+            <!-- Category Legend -->
+            <div class="mt-4 bg-white rounded-xl p-3 shadow-sm border border-slate-200 flex flex-wrap gap-2 text-xs justify-center">
+                <span class="inline-flex items-center px-2 py-1 rounded bg-emerald-100 text-emerald-800 font-medium">通常授業 / 1級対策</span>
+                <span class="inline-flex items-center px-2 py-1 rounded bg-rose-100 text-rose-800 font-medium">まとめ試験</span>
+                <span class="inline-flex items-center px-2 py-1 rounded bg-amber-100 text-amber-800 font-medium">口述対策</span>
+                <span class="inline-flex items-center px-2 py-1 rounded bg-sky-100 text-sky-800 font-medium">行事</span>
+                <span class="inline-flex items-center px-2 py-1 rounded bg-red-100 text-red-700 font-medium">祝日</span>
+                <span class="inline-flex items-center px-2 py-1 rounded bg-purple-100 text-purple-800 font-medium">学校休み</span>
+                <span class="inline-flex items-center px-2 py-1 rounded bg-slate-100 text-slate-600 font-medium">土日休日</span>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Schedule Data & Engine -->
+    <script>
+        // 日本の祝日データ
+        const holidaysData = {
+            "2026-01-01": "元日",
+            "2026-01-12": "成人の日",
+            "2026-02-11": "建国記念の日",
+            "2026-02-23": "天皇誕生日",
+            "2026-03-20": "春分の日",
+            "2026-04-29": "昭和の日",
+            "2026-05-03": "憲法記念日",
+            "2026-05-04": "みどもの日",
+            "2026-05-05": "こどもの日",
+            "2026-05-06": "振替休日",
+            "2026-07-20": "海の日",
+            "2026-08-11": "山の日",
+            "2026-09-21": "敬老の日",
+            "2026-09-22": "国民の祝日",
+            "2026-09-23": "秋分の日",
+            "2026-10-12": "スポーツの日",
+            "2026-11-03": "文化の日",
+            "2026-11-23": "勤労感謝の日"
+        };
+
+        // --- 1. 時間割ルール定義 ---
+        const periods = [
+            { num: 1, name: "1コマ目", time: "9:10〜10:00" },
+            { num: 2, name: "2コマ目", time: "10:10〜11:00" },
+            { num: 3, name: "3コマ目", time: "11:10〜12:00" },
+            { num: "lunch", name: "昼休憩", time: "12:00〜12:50" },
+            { num: 4, name: "4コマ目", time: "12:50〜13:40" },
+            { num: 5, name: "5コマ目", time: "13:50〜14:40" },
+            { num: 6, name: "6コマ目", time: "14:50〜15:40" },
+            { num: 7, name: "7コマ目", time: "15:50〜16:40" },
+            { num: 8, name: "8コマ目", time: "16:50〜17:40" },
+        ];
+
+        // --- 2. 予定データ (events) ---
+        // ※ 形式: YYYY-MM-DD
+        const eventsData = [
+            // 8/31
+            { date: "2026-08-31", period: 1, title: "HR", category: "normal" },
+            { date: "2026-08-31", period: 2, title: "HR", category: "normal" },
+            { date: "2026-08-31", period: 3, title: "1級対策", category: "normal" },
+            // 9/1 - 9/2
+            ...[1, 2, 3, 4].flatMap(p => [
+                { date: "2026-09-01", period: p, title: "インターン", category: "normal" },
+                { date: "2026-09-02", period: p, title: "インターン", category: "normal" },
+            ]),
+            // 9/3 - 9/4
+            ...[1, 2, 3, 4, 5, 6].flatMap(p => [
+                { date: "2026-09-03", period: p, title: "SC", category: "normal" },
+                { date: "2026-09-04", period: p, title: "SC", category: "normal" },
+            ]),
+            // 9/7 - 9/10
+            ...["2026-09-07", "2026-09-08", "2026-09-09", "2026-09-10"].flatMap(d => 
+                [1, 2, 3, 4].map(p => ({ date: d, period: p, title: "1級対策", category: "normal" }))
+            ),
+            // 9/11
+            { date: "2026-09-11", period: 1, title: "E：センサ・アクチュエータ まとめ試験 4", category: "exam" },
+            { date: "2026-09-11", period: 2, title: "E：センサ・アクチュエータ まとめ試験 4", category: "exam" },
+            { date: "2026-09-11", period: 3, title: "E：センサ・アクチュエータ まとめ試験 4", category: "exam" },
+            // 9/14 - 9/17
+            ...["2026-09-14", "2026-09-15", "2026-09-16", "2026-09-17"].flatMap(d => 
+                [1, 2, 3, 4].map(p => ({ date: d, period: p, title: "1級対策", category: "normal" }))
+            ),
+            // 9/18
+            { date: "2026-09-18", period: 1, title: "E：CAN・故障探求 まとめ試験 5", category: "exam" },
+            { date: "2026-09-18", period: 2, title: "E：CAN・故障探求 まとめ試験 5", category: "exam" },
+            { date: "2026-09-18", period: 3, title: "E：CAN・故障探求 まとめ試験 5", category: "exam" },
+            // 9/24
+            { date: "2026-09-24", period: 1, title: "口述対策 1", category: "oral" },
+            { date: "2026-09-24", period: 2, title: "口述対策 1", category: "oral" },
+            { date: "2026-09-24", period: 3, title: "口述対策 1", category: "oral" },
+            // 9/25
+            ...[1, 2, 3, 4].map(p => ({ date: "2026-09-25", period: p, title: "1級対策", category: "normal" })),
+            // 9/29
+            ...[1, 2, 3, 4].map(p => ({ date: "2026-09-29", period: p, title: "1級対策", category: "normal" })),
+            // 9/30
+            { date: "2026-09-30", period: 1, title: "口述対策 3", category: "oral" },
+            { date: "2026-09-30", period: 2, title: "口述対策 3", category: "oral" },
+            { date: "2026-09-30", period: 3, title: "口述対策 3", category: "oral" },
+            // 10/1
+            { date: "2026-10-01", period: 1, title: "C：AT・ABS まとめ試験 6", category: "exam" },
+            { date: "2026-10-01", period: 2, title: "C：AT・ABS まとめ試験 6", category: "exam" },
+            { date: "2026-10-01", period: 3, title: "C：AT・ABS まとめ試験 6", category: "exam" },
+            // 10/2
+            { date: "2026-10-02", period: 1, title: "口述対策 2", category: "oral" },
+            { date: "2026-10-02", period: 2, title: "口述対策 2", category: "oral" },
+            { date: "2026-10-02", period: 3, title: "口述対策 2", category: "oral" },
+            // 10/5 - 10/8
+            ...["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08"].flatMap(d => 
+                [1, 2, 3, 4].map(p => ({ date: d, period: p, title: "1級対策", category: "normal" }))
+            ),
+            // 10/9
+            { date: "2026-10-09", period: 1, title: "C：EPS・A/C まとめ試験 7", category: "exam" },
+            { date: "2026-10-09", period: 2, title: "C：EPS・A/C まとめ試験 7", category: "exam" },
+            { date: "2026-10-09", period: 3, title: "C：EPS・A/C まとめ試験 7", category: "exam" },
+            // 10/13 - 10/16
+            ...["2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"].flatMap(d => 
+                [1, 2, 3, 4].map(p => ({ date: d, period: p, title: "1級対策", category: "normal" }))
+            ),
+            // 10/17 - 10/18
+            ...[1, 2, 3, 4, 5, 6, 7, 8].map(p => ({ date: "2026-10-17", period: p, title: "学園祭準備", category: "event" })),
+            ...[1, 2, 3, 4, 5, 6, 7, 8].map(p => ({ date: "2026-10-18", period: p, title: "学園祭", category: "event" })),
+            // 10/21
+            ...[1, 2, 3, 4].map(p => ({ date: "2026-10-21", period: p, title: "1級対策", category: "normal" })),
+            // 10/22
+            { date: "2026-10-22", period: 1, title: "C：振動騒音・法令 まとめ試験 8", category: "exam" },
+            { date: "2026-10-22", period: 2, title: "C：振動騒音・法令 まとめ試験 8", category: "exam" },
+            { date: "2026-10-22", period: 3, title: "C：振動騒音・法令 まとめ試験 8", category: "exam" },
+            // 10/23
+            { date: "2026-10-23", period: 1, title: "口述対策 4", category: "oral" },
+            { date: "2026-10-23", period: 2, title: "口述対策 4", category: "oral" },
+            { date: "2026-10-23", period: 3, title: "口述対策 4", category: "oral" },
+        ];
+
+        // --- 3. アプリ状態管理 ---
+        let currentTab = 'daily'; // 'daily', 'weekly', 'monthly'
+        let currentDate = new Date(); // デフォルトは今日
+
+        const categoryStyles = {
+            normal: { bg: 'bg-emerald-50 border-emerald-200 text-emerald-900', badge: 'bg-emerald-600 text-white', label: '通常授業' },
+            exam: { bg: 'bg-rose-50 border-rose-200 text-rose-900', badge: 'bg-rose-600 text-white', label: 'まとめ試験' },
+            oral: { bg: 'bg-amber-50 border-amber-200 text-amber-900', badge: 'bg-amber-600 text-white', label: '口述対策' },
+            event: { bg: 'bg-sky-50 border-sky-200 text-sky-900', badge: 'bg-sky-600 text-white', label: '行事' },
+            holiday: { bg: 'bg-red-50 border-red-200 text-red-900', badge: 'bg-red-600 text-white', label: '祝日' },
+            school_off: { bg: 'bg-purple-50 border-purple-200 text-purple-900', badge: 'bg-purple-600 text-white', label: '学校休み' },
+            empty: { bg: 'bg-slate-50 border-slate-200 text-slate-400', badge: 'bg-slate-300 text-slate-600', label: '授業なし' }
+        };
+
+        // --- 4. ユーティリティ関数 ---
+        function formatDateStr(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function getDayOfWeekStr(date) {
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            return days[date.getDay()];
+        }
+
+        function getMonday(d) {
+            const date = new Date(d);
+            const day = date.getDay();
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(date.setDate(diff));
+        }
+
+        // 日付の状態（授業あり/祝日/土日/学校休み）を判別
+        function getDayInfo(dateObj) {
+            const dateStr = formatDateStr(dateObj);
+            const dayOfWeek = dateObj.getDay();
+            const holidayName = holidaysData[dateStr] || null;
+            const dayEvents = eventsData.filter(e => e.date === dateStr);
+            const hasClass = dayEvents.length > 0;
+            const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+
+            let statusType = 'class'; // デフォルトは授業日
+            let statusLabel = '';
+
+            if (hasClass) {
+                statusType = 'class';
+            } else if (holidayName) {
+                statusType = 'holiday';
+                statusLabel = holidayName;
+            } else if (!isWeekend) {
+                // 土日祝日以外で授業がない日
+                statusType = 'school_off';
+                statusLabel = '学校休み';
+            } else {
+                statusType = 'weekend';
+                statusLabel = '休日';
+            }
+
+            return {
+                dateStr,
+                holidayName,
+                dayEvents,
+                hasClass,
+                isWeekend,
+                statusType,
+                statusLabel
+            };
+        }
+
+        function getDayOfWeekStr(date) {
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            return days[date.getDay()];
+        }
+
+        function getMonday(d) {
+            const date = new Date(d);
+            const day = date.getDay();
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(date.setDate(diff));
+        }
+
+        // --- 5. タブ切り替え ---
+        function switchTab(tab) {
+            currentTab = tab;
+            ['daily', 'weekly', 'monthly'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const view = document.getElementById(`view-${t}`);
+                if (t === tab) {
+                    btn.classList.add('border-white', 'text-white');
+                    btn.classList.remove('border-transparent', 'text-deepgreen-200');
+                    view.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('border-white', 'text-white');
+                    btn.classList.add('border-transparent', 'text-deepgreen-200');
+                    view.classList.add('hidden');
+                }
+            });
+            render();
+        }
+
+        // --- 6. ナビゲーション（前へ/次へ/今日） ---
+        function navigateDate(delta) {
+            if (currentTab === 'daily') {
+                currentDate.setDate(currentDate.getDate() + delta);
+            } else if (currentTab === 'weekly') {
+                currentDate.setDate(currentDate.getDate() + (delta * 7));
+            } else if (currentTab === 'monthly') {
+                currentDate.setMonth(currentDate.getMonth() + delta);
+            }
+            render();
+        }
+
+        function resetToToday() {
+            currentDate = new Date();
+            render();
+        }
+
+        // --- 7. レンダリング主処理 ---
+        function render() {
+            // Header Today Badge
+            const today = new Date();
+            document.getElementById('today-badge').textContent = `本日: ${today.getMonth() + 1}/${today.getDate()} (${getDayOfWeekStr(today)})`;
+
+            if (currentTab === 'daily') {
+                renderDaily();
+            } else if (currentTab === 'weekly') {
+                renderWeekly();
+            } else if (currentTab === 'monthly') {
+                renderMonthly();
+            }
+        }
+
+        // --- 8. 日別ビュー描画 ---
+        function renderDaily() {
+            const dateStr = formatDateStr(currentDate);
+            const dayOfWeek = getDayOfWeekStr(currentDate);
+            const dayInfo = getDayInfo(currentDate);
+            
+            // Title Display
+            let subTitle = ` (${dayOfWeek})`;
+            if (dayInfo.holidayName) {
+                subTitle += ` - ${dayInfo.holidayName}`;
+            } else if (dayInfo.statusType === 'school_off') {
+                subTitle += ` - 学校休み`;
+            }
+            
+            document.getElementById('date-display-title').textContent = 
+                `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月${currentDate.getDate()}日` + subTitle;
+
+            const container = document.getElementById('view-daily');
+            container.innerHTML = '';
+
+            // 全休・学校休み・祝日の告知ヘッダーカード
+            if (!dayInfo.hasClass) {
+                let offBadgeColor = "bg-purple-100 text-purple-800 border-purple-200";
+                let off
