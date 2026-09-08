@@ -61,13 +61,13 @@
         <!-- Navigation Tabs -->
         <div class="max-w-5xl mx-auto px-4 flex border-t border-deepgreen-500/50">
             <button onclick="switchTab('daily')" id="tab-daily" class="flex-1 py-2.5 text-center text-sm font-semibold border-b-2 border-white text-white transition-colors">
-                日別
+                日別（今日）
             </button>
             <button onclick="switchTab('weekly')" id="tab-weekly" class="flex-1 py-2.5 text-center text-sm font-semibold border-b-2 border-transparent text-deepgreen-200 hover:text-white transition-colors">
-                週別
+                週別（今週）
             </button>
             <button onclick="switchTab('monthly')" id="tab-monthly" class="flex-1 py-2.5 text-center text-sm font-semibold border-b-2 border-transparent text-deepgreen-200 hover:text-white transition-colors">
-                月別
+                月別（月間）
             </button>
         </div>
     </header>
@@ -83,8 +83,7 @@
             
             <div class="text-center">
                 <div id="date-display-title" class="text-base sm:text-lg font-bold text-slate-800"></div>
-                <!-- 状態によってテキストが変わるボタン -->
-                <button id="reset-today-btn" onclick="resetToToday()" class="text-xs text-deepgreen-600 font-medium hover:underline mt-0.5">
+                <button onclick="resetToToday()" class="text-xs text-deepgreen-600 font-medium hover:underline mt-0.5">
                     今日を表示
                 </button>
             </div>
@@ -160,7 +159,7 @@
             "2026-11-23": "勤労感謝の日"
         };
 
-        // --- 1. 時間割ルール定義 (1〜7コマ) ---
+        // --- 1. 時間割ルール定義 ---
         const periods = [
             { num: 1, name: "1コマ目", time: "9:10〜10:00" },
             { num: 2, name: "2コマ目", time: "10:10〜11:00" },
@@ -251,6 +250,20 @@
             { date: "2026-10-23", period: 3, title: "口述対策 4", category: "oral" },
         ];
 
+        // --- 2.5 持ち物データ (belongings) ---
+        const belongingsData = {
+            "2026-09-07": ["テキスト：エンジン電子制御装置", "筆記用具", "電卓"],
+            "2026-09-08": ["テキスト：エンジン電子制御装置", "筆記用具", "電卓"],
+            "2026-09-09": ["テキスト：エンジン電子制御装置", "筆記用具", "電卓"],
+            "2026-09-10": ["テキスト：エンジン電子制御装置", "筆記用具", "電卓"],
+            "2026-09-11": ["テキスト：エンジン電子制御装置", "筆記用具", "電卓"],
+            "2026-09-14": ["テキスト：エンジン電子制御装置", "筆記用具", "電卓"],
+            "2026-09-15": ["テキスト：エンジン電子制御装置", "筆記用具", "電卓"],
+            "2026-09-16": ["テキスト：エンジン電子制御装置", "筆記用具", "電卓"],
+            "2026-09-17": ["テキスト：エンジン電子制御装置", "筆記用具", "電卓"],
+            "2026-09-18": ["テキスト：エンジン電子制御装置", "筆記用具", "電卓"]
+        };
+
         // --- 3. アプリ状態管理 ---
         let currentTab = 'daily';
         let currentDate = new Date();
@@ -285,25 +298,12 @@
             return new Date(date.setDate(diff));
         }
 
-        function isSameDay(d1, d2) {
-            return formatDateStr(d1) === formatDateStr(d2);
-        }
-
-        function isSameWeek(d1, d2) {
-            const m1 = formatDateStr(getMonday(d1));
-            const m2 = formatDateStr(getMonday(d2));
-            return m1 === m2;
-        }
-
-        function isSameMonth(d1, d2) {
-            return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth();
-        }
-
         function getDayInfo(dateObj) {
             const dateStr = formatDateStr(dateObj);
             const dayOfWeek = dateObj.getDay();
             const holidayName = holidaysData[dateStr] || null;
             const dayEvents = eventsData.filter(e => e.date === dateStr);
+            const belongings = belongingsData[dateStr] || [];
             const hasClass = dayEvents.length > 0;
             const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
 
@@ -327,6 +327,7 @@
                 dateStr,
                 holidayName,
                 dayEvents,
+                belongings,
                 hasClass,
                 isWeekend,
                 statusType,
@@ -380,32 +381,22 @@
             const today = new Date();
             document.getElementById('today-badge').textContent = `本日: ${today.getMonth() + 1}/${today.getDate()} (${getDayOfWeekStr(today)})`;
 
-            // UIの連動 (ボタン名と表示/非表示の切り替え)
-            const resetBtn = document.getElementById('reset-today-btn');
-
             if (currentTab === 'daily') {
-                resetBtn.textContent = '今日を表示';
-                resetBtn.style.display = isSameDay(currentDate, today) ? 'none' : 'inline-block';
-                renderDaily(today);
+                renderDaily();
             } else if (currentTab === 'weekly') {
-                resetBtn.textContent = '今週を表示';
-                resetBtn.style.display = isSameWeek(currentDate, today) ? 'none' : 'inline-block';
-                renderWeekly(today);
+                renderWeekly();
             } else if (currentTab === 'monthly') {
-                resetBtn.textContent = '今月を表示';
-                resetBtn.style.display = isSameMonth(currentDate, today) ? 'none' : 'inline-block';
-                renderMonthly(today);
+                renderMonthly();
             }
         }
 
         // --- 8. 日別ビュー描画 ---
-        function renderDaily(today) {
+        function renderDaily() {
             const dateStr = formatDateStr(currentDate);
             const dayOfWeek = getDayOfWeekStr(currentDate);
             const dayInfo = getDayInfo(currentDate);
-            const isToday = isSameDay(currentDate, today);
             
-            let subTitle = isToday ? ` (今日)` : ` (${dayOfWeek})`;
+            let subTitle = ` (${dayOfWeek})`;
             if (dayInfo.holidayName) {
                 subTitle += ` - ${dayInfo.holidayName}`;
             } else if (dayInfo.statusType === 'school_off') {
@@ -417,6 +408,34 @@
 
             const container = document.getElementById('view-daily');
             container.innerHTML = '';
+
+            // --- 持ち物バナーの追加 ---
+            if (dayInfo.belongings && dayInfo.belongings.length > 0) {
+                let itemsListHtml = dayInfo.belongings.map(item => `
+                    <li class="flex items-center text-sm text-slate-700 py-0.5">
+                        <svg class="w-4 h-4 mr-2 text-deepgreen-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>${item}</span>
+                    </li>
+                `).join('');
+
+                container.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-4 border-l-4 border-l-deepgreen-500">
+                        <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center">
+                            <svg class="w-4 h-4 text-deepgreen-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                            </svg>
+                            <span class="text-sm font-bold text-slate-800">本日の持ち物・準備物</span>
+                        </div>
+                        <div class="p-3">
+                            <ul class="space-y-1">
+                                ${itemsListHtml}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
 
             if (!dayInfo.hasClass) {
                 let offBadgeColor = "bg-purple-100 text-purple-800 border-purple-200";
@@ -492,17 +511,14 @@
             });
         }
 
-        // --- 9. 週別ビュー描画 (スマホ専用縦型レイアウト) ---
-        function renderWeekly(today) {
+        // --- 9. 週別ビュー描画 ---
+        function renderWeekly() {
             const monday = getMonday(currentDate);
             const sunday = new Date(monday);
             sunday.setDate(sunday.getDate() + 6);
-            
-            const isCurrentWeek = isSameWeek(currentDate, today);
-            const weekNote = isCurrentWeek ? " (今週)" : "";
 
             document.getElementById('date-display-title').textContent = 
-                `${monday.getMonth() + 1}/${monday.getDate()} - ${sunday.getMonth() + 1}/${sunday.getDate()}${weekNote}`;
+                `${monday.getMonth() + 1}/${monday.getDate()} - ${sunday.getMonth() + 1}/${sunday.getDate()} (今週)`;
 
             const container = document.getElementById('view-weekly');
             container.innerHTML = '';
@@ -513,7 +529,7 @@
                 return d;
             });
 
-            const todayStr = formatDateStr(today);
+            const todayStr = formatDateStr(new Date());
 
             weekDates.forEach(d => {
                 const dStr = formatDateStr(d);
@@ -535,11 +551,11 @@
 
                 let subNote = "";
                 if (dayInfo.holidayName) {
-                    subNote = `<span class="text-xs font-normal ${isToday ? 'text-emerald-100' : 'text-red-600'} ml-auto">${dayInfo.holidayName}</span>`;
+                    subNote = `<span class="text-xs font-normal text-red-600 ml-auto">${dayInfo.holidayName}</span>`;
                 } else if (dayInfo.statusType === 'school_off') {
-                    subNote = `<span class="text-xs font-normal ${isToday ? 'text-emerald-100' : 'text-purple-600'} ml-auto">学校休み</span>`;
+                    subNote = `<span class="text-xs font-normal text-purple-600 ml-auto">学校休み</span>`;
                 } else if (dayInfo.isWeekend && !dayInfo.hasClass) {
-                    subNote = `<span class="text-xs font-normal ${isToday ? 'text-emerald-100' : 'text-slate-500'} ml-auto">休日</span>`;
+                    subNote = `<span class="text-xs font-normal text-slate-500 ml-auto">休日</span>`;
                 }
 
                 let dayCardHtml = `
@@ -597,14 +613,11 @@
         }
 
         // --- 10. 月別ビュー描画 ---
-        function renderMonthly(today) {
+        function renderMonthly() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
 
-            const isCurrentMonth = isSameMonth(currentDate, today);
-            const monthNote = isCurrentMonth ? " (今月)" : "";
-
-            document.getElementById('date-display-title').textContent = `${year}年 ${month + 1}月${monthNote}`;
+            document.getElementById('date-display-title').textContent = `${year}年 ${month + 1}月`;
 
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
@@ -618,7 +631,7 @@
                 grid.innerHTML += `<div class="bg-slate-50 border border-slate-100 rounded h-14 p-0.5 opacity-30"></div>`;
             }
 
-            const todayStr = formatDateStr(today);
+            const todayStr = formatDateStr(new Date());
 
             for (let day = 1; day <= totalDays; day++) {
                 const dateObj = new Date(year, month, day);
