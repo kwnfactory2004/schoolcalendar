@@ -1,6 +1,6 @@
 // TimeGrid(時間割)Service Worker
 // 時間割を更新したら CACHE_VERSION の数字を上げると、確実に新しいキャッシュへ切り替わります。
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `timegrid-${CACHE_VERSION}`;
 const PRECACHE = [
   './',
