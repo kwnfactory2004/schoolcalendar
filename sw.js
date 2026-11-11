@@ -36,6 +36,8 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  // 動画は Service Worker を通さず、ブラウザに直接読ませる(途中再生のため)
+  if (url.pathname.endsWith('.mp4')) return;
 
   // ページ本体:ネット優先(最新の時間割を表示)、圏外ならキャッシュ
   if (req.mode === 'navigate') {
