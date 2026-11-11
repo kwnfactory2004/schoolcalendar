@@ -128,6 +128,19 @@ header{position:sticky;top:0;z-index:30;background:var(--g);color:#fff;backgroun
 .tag{display:block;text-align:center;font-size:9.5px;font-weight:700;line-height:1;padding:4px 1px;border-radius:6px;color:#fff;background:var(--c);overflow:hidden;white-space:nowrap}
 .cell.today .tag{background:#fff;color:var(--g)}
 .legend{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:11px}
+/* 行程タイムライン(特別日) */
+.tlist{display:flex;flex-direction:column;margin-top:2px}
+.tl{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid #edf1ef}
+.tl:first-child{border-top:0}
+.tl .tt{color:var(--g2);display:flex;flex-direction:column;gap:3px}
+.tl .ttl{font-size:14.5px}
+.tl .tn{font-size:12px;color:var(--sub);margin-top:3px}
+.tl.past{opacity:.5}
+.tl.next{background:rgba(31,122,90,.07);border-radius:12px;padding-left:8px;padding-right:8px;margin:0 -8px}
+.tl.now{background:var(--g);color:#fff;border-radius:12px;padding-left:10px;padding-right:10px;margin:0 -10px;border-top-color:transparent}
+.tl.now .tt,.tl.now .tn{color:var(--g5)}
+.tl.now .pill{background:rgba(255,255,255,.18);color:#fff}
+@media(max-width:420px){.tl{grid-template-columns:70px minmax(0,1fr);}.tl .pill{grid-column:2;justify-self:start}}
 .hidden{display:none!important}
 /* ホーム画面から起動したとき、ノッチ・ホームバーに被らないようにする */
 header{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
@@ -277,8 +290,7 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
             { date: "2026-10-23", period: 1, title: "口述対策 4", category: "oral" },
             { date: "2026-10-23", period: 2, title: "口述対策 4", category: "oral" },
             { date: "2026-10-23", period: 3, title: "口述対策 4", category: "oral" },
-            ...[1, 2, 3, 4, 5, 6, 7].map(p => ({ date: "2026-11-12", period: p, title: "研修旅行", category: "event" })),
-            ...[1, 2, 3, 4, 5, 6, 7].map(p => ({ date: "2026-11-13", period: p, title: "研修旅行", category: "event" })),
+            // 11/12-13 研修旅行は下の specialDays(行程タイムライン)で管理
 
             // --- 追加のスケジュール (10/26以降) ---
             // 10/26 - 10/27 (1-6コマ 1級対策)
@@ -387,6 +399,55 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
             ...[1,2,3].map(p => ({ date: "2027-03-17", period: p, title: "卒業式", category: "event" }))
         ];
 
+        // --- 2.4 特別日 (specialDays) ---
+        // 授業のコマ割りではなく「行程タイムライン」で表示する日。
+        // kind: meet=集合 / move=移動 / rest=休憩 / visit=見学・観光 / free=自由時間 / stay=宿泊
+        // t は "HH:MM" または "HH:MM〜HH:MM"。終了が無い項目は次の項目の開始までを「今」とみなす。
+        const specialDays = {
+            "2026-11-12": {
+                title: "研修旅行 1日目", sub: "鎌倉・横浜",
+                stops: [
+                    { t: "06:50", label: "6号館前 バス乗車", kind: "meet" },
+                    { t: "07:00", label: "群馬自動車大学校 出発", kind: "move", note: "伊勢崎IC" },
+                    { t: "08:00〜08:15", label: "高坂SA", kind: "rest" },
+                    { t: "09:05〜09:20", label: "厚木PA", kind: "rest", note: "茅ヶ崎海岸IC へ" },
+                    { t: "10:30", label: "鶴岡八幡宮駐車場 下車", kind: "move" },
+                    { t: "11:00〜12:00", label: "荏柄天神社", kind: "visit", note: "参拝" },
+                    { t: "12:00〜14:00", label: "小町通り", kind: "visit", note: "散策(〜14:00)" },
+                    { t: "14:00", label: "バスで横浜へ", kind: "move", note: "朝比奈IC → 本牧JCT → 横浜公園IC" },
+                    { t: "15:00", label: "横浜桜木町地区 到着", kind: "free", note: "到着後フリータイム" }
+                ],
+                lodging: { name: "横浜桜木町ワシントンホテル" }
+            },
+            "2026-11-13": {
+                title: "研修旅行 2日目", sub: "東京ディズニーリゾート",
+                stops: [
+                    { t: "08:30", label: "ホテル 出発", kind: "move", note: "横浜公園IC → 葛西IC" },
+                    { t: "09:30〜16:30", label: "東京ディズニーリゾート", kind: "visit", note: "観光" },
+                    { t: "16:30", label: "バスで帰路へ", kind: "move", note: "浦安IC" },
+                    { t: "17:35〜17:50", label: "羽生PA", kind: "rest", note: "岩舟JCT → 伊勢崎IC" },
+                    { t: "18:45", label: "群馬自動車大学校 到着", kind: "meet" }
+                ]
+            }
+        };
+        const kindStyles = {
+            meet:  { cls: 'c-event',  label: '集合・解散' },
+            move:  { cls: 'c-none',   label: '移動' },
+            rest:  { cls: 'c-off',    label: '休憩' },
+            visit: { cls: 'c-normal', label: '見学・観光' },
+            free:  { cls: 'c-oral',   label: '自由時間' }
+        };
+        function hm(str) { const [h, m] = str.split(':').map(Number); return h * 60 + m; }
+        // 各項目の [開始分, 終了分] を返す(終了が無ければ次の項目の開始、最後は開始+30分)
+        function stopRanges(stops) {
+            return stops.map((st, i) => {
+                const [a, b] = st.t.split('〜');
+                const s = hm(a);
+                const e = b ? hm(b) : (stops[i + 1] ? hm(stops[i + 1].t.split('〜')[0]) : s + 30);
+                return [s, e];
+            });
+        }
+
         // --- 2.5 持ち物データ (belongings) ---
         const belongingsData = {
             "2026-09-07": ["テキスト：エンジン電子制御装置", "筆記用具", "電卓"],
@@ -475,7 +536,8 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
             const holidayName = holidaysData[dateStr] || null;
             const dayEvents = eventsData.filter(e => e.date === dateStr);
             const belongings = belongingsData[dateStr] || [];
-            const hasClass = dayEvents.length > 0;
+            const special = specialDays[dateStr] || null;
+            const hasClass = dayEvents.length > 0 || !!special;
             const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
 
             let statusType = 'class';
@@ -497,7 +559,7 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                 statusLabel = '休日';
             }
 
-            return { dateStr, holidayName, dayEvents, belongings, hasClass, isWeekend, statusType, statusLabel };
+            return { dateStr, holidayName, dayEvents, belongings, special, hasClass, isWeekend, statusType, statusLabel };
         }
 
         // "9:10〜10:00" → [開始分, 終了分]
@@ -577,12 +639,47 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
             el('date-display-title').innerHTML =
                 `${dot(`${currentDate.getFullYear()}.${currentDate.getMonth() + 1}.${currentDate.getDate()}`, 22)}<b>（${dow}）</b>${sub}`;
             const nClass = new Set(dayInfo.dayEvents.map(e => e.period)).size;
-            el('date-sub').innerHTML = dot(`${isToday ? 'TODAY - ' : ''}${nClass ? nClass + ' CLASSES' : 'NO CLASS'}`, 10);
+            el('date-sub').innerHTML = dot(`${isToday ? 'TODAY - ' : ''}${dayInfo.special ? 'TRIP' : (nClass ? nClass + ' CLASSES' : 'NO CLASS')}`, 10);
 
             const container = el('view-daily');
             let html = '';
             let idx = 0;
             const dayWord = isToday ? '本日' : 'この日';
+
+            // 特別日:行程タイムライン
+            if (dayInfo.special) {
+                const sp = dayInfo.special;
+                const nowMin0 = now.getHours() * 60 + now.getMinutes();
+                const ranges = stopRanges(sp.stops);
+                let nextDone = false;
+                const rows = sp.stops.map((st, i) => {
+                    const [s, e] = ranges[i];
+                    const k = kindStyles[st.kind] || kindStyles.move;
+                    const running = isToday && nowMin0 >= s && nowMin0 < e;
+                    const past = isToday && nowMin0 >= e;
+                    const isNext = isToday && !running && !past && !nextDone;
+                    if (isNext) nextDone = true;
+                    return `<div class="tl ${k.cls} ${running ? 'now' : ''} ${past ? 'past' : ''} ${isNext ? 'next' : ''}">
+                        <div class="tt">${st.t.split('〜').map((x, j) => `<div>${dot((j ? '-' : '') + x, 11)}</div>`).join('')}</div>
+                        <div class="tb"><div class="ttl">${st.label}</div>${st.note ? `<div class="tn">${st.note}</div>` : ''}</div>
+                        <span class="pill">${running ? 'NOW・' : (isNext ? 'NEXT・' : '')}${k.label}</span>
+                    </div>`;
+                }).join('');
+                html += `
+                    <div class="tile cat c-event full" ${delay(idx++)}>
+                        <div class="top"><div><div class="ttl" style="font-size:18px">${sp.title}</div><div class="tm" style="margin-top:3px;font-size:12.5px">${sp.sub || ''}</div></div><span class="pill">行事</span></div>
+                        <div class="tlist">${rows}</div>
+                    </div>`;
+                if (sp.lodging) {
+                    html += `
+                    <div class="tile note full" ${delay(idx++)}>
+                        <h3>${dot('HOTEL', 11)}<span>宿泊</span></h3>
+                        <ul><li>${sp.lodging.name}</li></ul>
+                    </div>`;
+                }
+                container.innerHTML = html;
+                return;
+            }
 
             // 持ち物
             if (dayInfo.belongings.length > 0) {
@@ -694,7 +791,12 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                 else if (info.isWeekend && !info.hasClass) note = '休日';
 
                 let body = '';
-                if (!info.hasClass) {
+                if (info.special) {
+                    body = info.special.stops.map(st => {
+                        const k = kindStyles[st.kind] || kindStyles.move;
+                        return `<div class="pr ${k.cls}"><span class="x" style="flex:none;min-width:84px;color:var(--g2)">${st.t.replace('〜', '-')}</span><span class="x">${st.label}</span></div>`;
+                    }).join('');
+                } else if (!info.hasClass) {
                     let msg = '授業なし';
                     if (info.holidayName) msg = `祝日（${info.holidayName}）`;
                     else if (info.statusType === 'winter_break') msg = '冬休み';
@@ -743,7 +845,8 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                 const cats = new Set(info.dayEvents.map(e => e.category));
 
                 let tag = '';
-                if (info.dayEvents.length > 0) {
+                if (info.special) tag = ['c-event', '旅行'];
+                else if (info.dayEvents.length > 0) {
                     if (cats.has('exam')) tag = ['c-exam', '試験'];
                     else if (cats.has('oral')) tag = ['c-oral', '口述'];
                     else if (cats.has('event')) tag = ['c-event', '行事'];
