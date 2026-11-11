@@ -413,7 +413,7 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                     { t: "09:05〜09:20", label: "厚木PA", kind: "rest", note: "茅ヶ崎海岸IC へ" },
                     { t: "10:30", label: "鶴岡八幡宮駐車場 下車", kind: "move" },
                     { t: "11:00〜12:00", label: "荏柄天神社", kind: "visit", note: "参拝" },
-                    { t: "12:00〜14:00", label: "小町通り", kind: "visit", note: "散策(〜14:00)" },
+                    { t: "12:00〜14:00", label: "小町通り", kind: "visit", note: "散策(〜14:00)", video: "komachi.mp4" },
                     { t: "14:00", label: "バスで横浜へ", kind: "move", note: "朝比奈IC → 本牧JCT → 横浜公園IC" },
                     { t: "15:00", label: "横浜桜木町地区 到着", kind: "free", note: "到着後フリータイム" }
                 ],
@@ -661,7 +661,7 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                     if (isNext) nextDone = true;
                     return `<div class="tl ${k.cls} ${running ? 'now' : ''} ${past ? 'past' : ''} ${isNext ? 'next' : ''}">
                         <div class="tt">${st.t.split('〜').map((x, j) => `<div>${dot((j ? '-' : '') + x, 11)}</div>`).join('')}</div>
-                        <div class="tb"><div class="ttl">${st.label}</div>${st.note ? `<div class="tn">${st.note}</div>` : ''}</div>
+                        <div class="tb"><div class="ttl">${st.label}</div>${st.note ? `<div class="tn">${st.note}</div>` : ''}${st.video ? `<video src="${st.video}" controls playsinline preload="none" style="display:block;width:100%;max-width:300px;margin-top:8px;border-radius:12px;background:#000"></video>` : ''}</div>
                         <span class="pill">${running ? 'NOW・' : (isNext ? 'NEXT・' : '')}${k.label}</span>
                     </div>`;
                 }).join('');
