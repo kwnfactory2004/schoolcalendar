@@ -417,7 +417,7 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                     { t: "14:00", label: "バスで横浜へ", kind: "move", note: "朝比奈IC → 本牧JCT → 横浜公園IC" },
                     { t: "15:00", label: "横浜桜木町地区 到着", kind: "free", note: "到着後フリータイム" }
                 ],
-                lodging: { name: "横浜桜木町ワシントンホテル" }
+                lodging: { name: "横浜桜木町ワシントンホテル", map: "https://maps.app.goo.gl/r4UnMiGuG6HbtNWJ6" }
             },
             "2026-11-13": {
                 title: "研修旅行 2日目", sub: "東京ディズニーリゾート",
@@ -674,7 +674,7 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                     html += `
                     <div class="tile note full" ${delay(idx++)}>
                         <h3>${dot('HOTEL', 11)}<span>宿泊</span></h3>
-                        <ul><li>${sp.lodging.name}</li></ul>
+                        <ul><li>${sp.lodging.name}${sp.lodging.map ? ` <a href="${sp.lodging.map}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">Googleマップで開く ↗</a>` : ''}</li></ul>
                     </div>`;
                 }
                 container.innerHTML = html;
