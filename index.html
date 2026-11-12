@@ -415,13 +415,13 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                     { t: "11:00〜12:00", label: "荏柄天神社", kind: "visit", note: "参拝" },
                     { t: "12:00〜14:00", label: "小町通り", kind: "visit", note: "散策(〜14:00)", video: "komachi.mp4",
                       shops: [
-                        "【食べ歩き】いも吉館：紫いもソフト350円・紫いもコロッケ150円（10:00〜18:00）",
-                        "【食べ歩き】さくらの夢見屋：4色団子260円（10:00〜17:30）",
-                        "【お土産】鎌倉まめや：豆菓子・試食できる（平日17:00まで）",
-                        "【お土産】豊島屋本店：鳩サブレー（9:00〜19:00）",
-                        "【お土産】鎌倉紅谷：クルミッ子178円（八幡宮前本店 9:30〜17:00）",
-                        "※歩き食べは控えめに。買った店の近くで食べよう"
-                      ] },
+                        { kind: "食べ歩き", name: "さくらの夢見屋", desc: "カラフルお団子", map: "さくらの夢見屋 小町通り本店 鎌倉" },
+                        { kind: "食べ歩き", name: "いも吉館", desc: "紫いもソフト", map: "いも吉館 小町通り店 鎌倉" },
+                        { kind: "お土産", name: "鎌倉紅谷", desc: "クルミッ子", url: "https://beniya-ajisai.co.jp/shop/komachi/", map: "鎌倉紅谷 八幡宮前本店" },
+                        { kind: "お土産", name: "鎌倉まめや", desc: "豆菓子（試食できる）", url: "https://www.mame-mame.com/", map: "鎌倉まめや 小町通り店" },
+                        { kind: "お土産", name: "豊島屋本店", desc: "鳩サブレー", url: "https://www.hato.co.jp/shop", map: "豊島屋本店 鎌倉" }
+                      ],
+                      shopNote: "動画の流れ：前半に食べて、後半でお土産をまとめ買い。歩き食べはNG。お店の前のイートインやベンチで食べよう" },,
                     { t: "14:00", label: "バスで横浜へ", kind: "move", note: "朝比奈IC → 本牧JCT → 横浜公園IC" },
                     { t: "15:00", label: "横浜桜木町地区 到着", kind: "free", note: "到着後フリータイム" }
                 ],
@@ -690,7 +690,7 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                     if (isNext) nextDone = true;
                     return `<div class="tl ${k.cls} ${running ? 'now' : ''} ${past ? 'past' : ''} ${isNext ? 'next' : ''}">
                         <div class="tt">${st.t.split('〜').map((x, j) => `<div>${dot((j ? '-' : '') + x, 11)}</div>`).join('')}</div>
-                        <div class="tb"><div class="ttl">${st.label}</div>${st.note ? `<div class="tn">${st.note}</div>` : ''}${st.shops ? `<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px;font-weight:700">おすすめ店を見る（${st.shops.length - 1}店）</summary><ul style="list-style:none;display:grid;gap:5px;margin-top:6px;font-size:12.5px">${st.shops.map(x => `<li>${x}</li>`).join('')}</ul></details>` : ''}${st.video ? `<video src="${st.video}" controls playsinline preload="none" style="display:block;width:100%;max-width:300px;margin-top:8px;border-radius:12px;background:#000"></video>` : ''}</div>
+                        <div class="tb"><div class="ttl">${st.label}</div>${st.note ? `<div class="tn">${st.note}</div>` : ''}${st.shops ? `<details open style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px;font-weight:700">動画で紹介したお店（${st.shops.length}店）</summary><ul style="list-style:none;display:grid;gap:7px;margin-top:6px;font-size:12.5px">${st.shops.map(x => `<li><b>【${x.kind}】${x.name}</b>：${x.desc}<br>${x.url ? `<a href="${x.url}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">公式サイト ↗</a>　` : ''}<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.map)}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">地図 ↗</a></li>`).join('')}</ul>${st.shopNote ? `<div class="tn" style="margin-top:6px">${st.shopNote}</div>` : ''}</details>` : ''}${st.video ? `<video src="${st.video}" controls playsinline preload="none" style="display:block;width:100%;max-width:300px;margin-top:8px;border-radius:12px;background:#000"></video>` : ''}</div>
                         <span class="pill">${running ? 'NOW・' : (isNext ? 'NEXT・' : '')}${k.label}</span>
                     </div>`;
                 }).join('');
