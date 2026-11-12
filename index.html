@@ -432,7 +432,21 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                 title: "研修旅行 2日目", sub: "東京ディズニーリゾート",
                 stops: [
                     { t: "08:30", label: "ホテル 出発", kind: "move", note: "横浜公園IC → 葛西IC" },
-                    { t: "09:30〜16:30", label: "東京ディズニーリゾート", kind: "visit", note: "観光" },
+                    { t: "09:30〜16:30", label: "東京ディズニーリゾート", kind: "visit", note: "東京ディズニーシー／いまは「ディズニー・クリスマス」（〜12/25）",
+                      shopTitle: "シーの情報（公式の検索要約。当日アプリで要確認）",
+                      shops: [
+                        { kind: "回り方", name: "プライオリティパス", desc: "40周年分は8/31で終了。今は有料のプレミアアクセスと、無料のスタンバイパス（アトラクション対象かは未確認）。入園後にアプリで取る" },
+                        { kind: "回り方", name: "人気アトラクションの順番", desc: "混雑の情報は未確認。入園したらアプリの待ち時間を見て、空いているものから回ろう" },
+                        { kind: "ショー", name: "ディズニー・クリスマス・グリーティング", desc: "昼の公演。メディテレーニアンハーバー、約15分、1日2回（時刻は要確認）", url: "https://www.tokyodisneyresort.jp/tds/daily/schedule/" },
+                        { kind: "ショー", name: "ほかのショー・パレード", desc: "13日の予定は公式で未定のまま確認できず。アプリの「ショー・パレード」で見よう" },
+                        { kind: "ごはん", name: "ユカタンソーセージドッグ", desc: "600円" },
+                        { kind: "ごはん", name: "スモークターキーレッグ", desc: "1,200円" },
+                        { kind: "ごはん", name: "ミッキーチュロス", desc: "500円" },
+                        { kind: "お土産", name: "パスタスナック", desc: "1,100円" },
+                        { kind: "お土産", name: "リルリンリン ぬいぐるみバッジ", desc: "シー限定" },
+                        { kind: "お土産", name: "ポップコーンバケット", desc: "値段・売り場は未確認" }
+                      ],
+                      shopNote: "営業時間 9:00〜21:00。値段は変わることがあるので、買う前に確認してね" },
                     { t: "16:30", label: "バスで帰路へ", kind: "move", note: "浦安IC" },
                     { t: "17:35〜17:50", label: "羽生PA", kind: "rest", note: "岩舟JCT → 伊勢崎IC" },
                     { t: "18:45", label: "群馬自動車大学校 到着", kind: "meet" }
@@ -690,7 +704,7 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                     if (isNext) nextDone = true;
                     return `<div class="tl ${k.cls} ${running ? 'now' : ''} ${past ? 'past' : ''} ${isNext ? 'next' : ''}">
                         <div class="tt">${st.t.split('〜').map((x, j) => `<div>${dot((j ? '-' : '') + x, 11)}</div>`).join('')}</div>
-                        <div class="tb"><div class="ttl">${st.label}</div>${st.note ? `<div class="tn">${st.note}</div>` : ''}${st.shops ? `<details open style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px;font-weight:700">動画で紹介したお店（${st.shops.length}店）</summary><ul style="list-style:none;display:grid;gap:7px;margin-top:6px;font-size:12.5px">${st.shops.map(x => `<li><b>【${x.kind}】${x.name}</b>：${x.desc}<br>${x.url ? `<a href="${x.url}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">公式サイト ↗</a>　` : ''}<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.map)}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">地図 ↗</a></li>`).join('')}</ul>${st.shopNote ? `<div class="tn" style="margin-top:6px">${st.shopNote}</div>` : ''}</details>` : ''}${st.video ? `<video src="${st.video}" controls playsinline preload="none" style="display:block;width:100%;max-width:300px;margin-top:8px;border-radius:12px;background:#000"></video>` : ''}</div>
+                        <div class="tb"><div class="ttl">${st.label}</div>${st.note ? `<div class="tn">${st.note}</div>` : ''}${st.shops ? `<details open style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px;font-weight:700">${st.shopTitle || "動画で紹介したお店"}（${st.shops.length}件）</summary><ul style="list-style:none;display:grid;gap:7px;margin-top:6px;font-size:12.5px">${st.shops.map(x => `<li><b>【${x.kind}】${x.name}</b>：${x.desc}${(x.url || x.map) ? '<br>' : ''}${x.url ? `<a href="${x.url}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">公式サイト ↗</a>　` : ''}${x.map ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.map)}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">地図 ↗</a>` : ''}</li>`).join('')}</ul>${st.shopNote ? `<div class="tn" style="margin-top:6px">${st.shopNote}</div>` : ''}</details>` : ''}${st.video ? `<video src="${st.video}" controls playsinline preload="none" style="display:block;width:100%;max-width:300px;margin-top:8px;border-radius:12px;background:#000"></video>` : ''}</div>
                         <span class="pill">${running ? 'NOW・' : (isNext ? 'NEXT・' : '')}${k.label}</span>
                     </div>`;
                 }).join('');
