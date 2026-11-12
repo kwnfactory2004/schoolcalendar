@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://kwnfactory2004.github.io; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://kwnfactory2004.github.io; connect-src 'self' https://api.open-meteo.com; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>時間割 - 4Aクラス</title>
 <meta name="theme-color" content="#0F382C">
@@ -413,10 +413,19 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                     { t: "09:05〜09:20", label: "厚木PA", kind: "rest", note: "茅ヶ崎海岸IC へ" },
                     { t: "10:30", label: "鶴岡八幡宮駐車場 下車", kind: "move" },
                     { t: "11:00〜12:00", label: "荏柄天神社", kind: "visit", note: "参拝" },
-                    { t: "12:00〜14:00", label: "小町通り", kind: "visit", note: "散策(〜14:00)", video: "komachi.mp4" },
+                    { t: "12:00〜14:00", label: "小町通り", kind: "visit", note: "散策(〜14:00)", video: "komachi.mp4",
+                      shops: [
+                        "【食べ歩き】いも吉館：紫いもソフト350円・紫いもコロッケ150円（10:00〜18:00）",
+                        "【食べ歩き】さくらの夢見屋：4色団子260円（10:00〜17:30）",
+                        "【お土産】鎌倉まめや：豆菓子・試食できる（平日17:00まで）",
+                        "【お土産】豊島屋本店：鳩サブレー（9:00〜19:00）",
+                        "【お土産】鎌倉紅谷：クルミッ子178円（八幡宮前本店 9:30〜17:00）",
+                        "※歩き食べは控えめに。買った店の近くで食べよう"
+                      ] },
                     { t: "14:00", label: "バスで横浜へ", kind: "move", note: "朝比奈IC → 本牧JCT → 横浜公園IC" },
                     { t: "15:00", label: "横浜桜木町地区 到着", kind: "free", note: "到着後フリータイム" }
                 ],
+                weather: { name: "鎌倉・横浜", lat: 35.35, lon: 139.57 },
                 lodging: { name: "横浜桜木町ワシントンホテル", map: "https://maps.app.goo.gl/r4UnMiGuG6HbtNWJ6" }
             },
             "2026-11-13": {
@@ -427,7 +436,8 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                     { t: "16:30", label: "バスで帰路へ", kind: "move", note: "浦安IC" },
                     { t: "17:35〜17:50", label: "羽生PA", kind: "rest", note: "岩舟JCT → 伊勢崎IC" },
                     { t: "18:45", label: "群馬自動車大学校 到着", kind: "meet" }
-                ]
+                ],
+                weather: { name: "舞浜", lat: 35.63, lon: 139.88 }
             }
         };
         const kindStyles = {
@@ -626,6 +636,25 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
             else renderMonthly();
         }
 
+        // --- 天気(Open-Meteo・無料・キー不要。失敗しても画面は変えない) ---
+        function wxText(c) {
+            if (c === 0) return '快晴'; if (c <= 3) return '晴れ〜くもり'; if (c <= 48) return '霧・くもり';
+            if (c <= 57) return '霧雨'; if (c <= 67) return '雨'; if (c <= 77) return '雪'; if (c <= 82) return 'にわか雨'; return '雷雨';
+        }
+        function loadWeather(w, dateStr) {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${w.lat}&longitude=${w.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&start_date=${dateStr}&end_date=${dateStr}`;
+            fetch(url).then(r => r.json()).then(j => {
+                const d = j.daily, node = document.getElementById('wx-line');
+                if (!d || !node) return;
+                const hi = Math.round(d.temperature_2m_max[0]), lo = Math.round(d.temperature_2m_min[0]);
+                const p = d.precipitation_probability_max[0];
+                node.textContent = `${w.name}：${wxText(d.weather_code[0])}　${lo}〜${hi}℃　雨 ${p}%` + (lo <= 10 ? '　寒いので上着を' : '');
+            }).catch(() => {
+                const node = document.getElementById('wx-line');
+                if (node) node.textContent = `${w.name}の天気は読み込めませんでした`;
+            });
+        }
+
         // --- 9. 日別ビュー描画 ---
         function renderDaily() {
             const now = new Date();
@@ -661,10 +690,28 @@ body{padding-bottom:calc(48px + env(safe-area-inset-bottom))}
                     if (isNext) nextDone = true;
                     return `<div class="tl ${k.cls} ${running ? 'now' : ''} ${past ? 'past' : ''} ${isNext ? 'next' : ''}">
                         <div class="tt">${st.t.split('〜').map((x, j) => `<div>${dot((j ? '-' : '') + x, 11)}</div>`).join('')}</div>
-                        <div class="tb"><div class="ttl">${st.label}</div>${st.note ? `<div class="tn">${st.note}</div>` : ''}${st.video ? `<video src="${st.video}" controls playsinline preload="none" style="display:block;width:100%;max-width:300px;margin-top:8px;border-radius:12px;background:#000"></video>` : ''}</div>
+                        <div class="tb"><div class="ttl">${st.label}</div>${st.note ? `<div class="tn">${st.note}</div>` : ''}${st.shops ? `<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px;font-weight:700">おすすめ店を見る（${st.shops.length - 1}店）</summary><ul style="list-style:none;display:grid;gap:5px;margin-top:6px;font-size:12.5px">${st.shops.map(x => `<li>${x}</li>`).join('')}</ul></details>` : ''}${st.video ? `<video src="${st.video}" controls playsinline preload="none" style="display:block;width:100%;max-width:300px;margin-top:8px;border-radius:12px;background:#000"></video>` : ''}</div>
                         <span class="pill">${running ? 'NOW・' : (isNext ? 'NEXT・' : '')}${k.label}</span>
                     </div>`;
                 }).join('');
+                if (isToday) {
+                    let cd = '';
+                    const ri = sp.stops.findIndex((st, i) => nowMin0 >= ranges[i][0] && nowMin0 < ranges[i][1]);
+                    const ni = sp.stops.findIndex((st, i) => nowMin0 < ranges[i][0]);
+                    const fmt = m => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+                    if (ri >= 0 && sp.stops[ri].t.includes('〜')) {
+                        const m = ranges[ri][1] - nowMin0;
+                        cd = `${sp.stops[ri].label}は ${fmt(ranges[ri][1])} まで（あと ${m} 分）`;
+                    } else if (ni >= 0) {
+                        const m = ranges[ni][0] - nowMin0;
+                        cd = `次：${sp.stops[ni].label}（${fmt(ranges[ni][0])}）まで あと ${m >= 60 ? Math.floor(m / 60) + ' 時間 ' : ''}${m % 60} 分`;
+                    }
+                    if (cd) html += `<div class="tile note full" ${delay(idx++)}><h3>${dot('NEXT', 11)}<span>${cd}</span></h3></div>`;
+                }
+                if (sp.weather) {
+                    html += `<div class="tile note full" ${delay(idx++)}><h3>${dot('WEATHER', 11)}<span id="wx-line">${sp.weather.name}の天気を読み込み中…</span></h3></div>`;
+                    loadWeather(sp.weather, dayInfo.dateStr);
+                }
                 html += `
                     <div class="tile cat c-event full" ${delay(idx++)}>
                         <div class="top"><div><div class="ttl" style="font-size:18px">${sp.title}</div><div class="tm" style="margin-top:3px;font-size:12.5px">${sp.sub || ''}</div></div><span class="pill">行事</span></div>
